@@ -3,7 +3,7 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { ownerProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { grantCuratorAccess, revokeCuratorAccess, hasCuratorAccess } from "./curatorAccess";
-import { addSubscriber, createCuratorPost, createCuratorRevision, createCuratorSubmission, createDreamSubmission, createGeneratedDream, createSpecimenUnlock, deleteCuratorPost, getCuratorEmail, getCuratorPostById, getCuratorPostBySlug, getUserByOpenId, listArchiveDoors, listCuratorPosts, listCuratorRevisions, listCuratorSpecimens, listCuratorSubmissions, listDreamSubmissions, listFieldNotes, listGeneratedDreams, listManifestoSections, listOfferingLedger, listPublishedCuratorPosts, listSpecimenUnlocks, listSubscribers, listUsers, restoreOfferings, setCuratorEmail, spendOfferings, updateCuratorPost, upsertArchiveDoor, upsertCuratorSpecimen, upsertFieldNote, upsertManifestoSection, upsertUser } from "./db";
+import { addSubscriber, archiveMediaAsset, createCuratorPost, createCuratorRevision, createCuratorSubmission, createDreamSubmission, createGeneratedDream, createSpecimenUnlock, deleteCuratorPost, getCuratorEmail, getCuratorPostById, getCuratorPostBySlug, getUserByOpenId, listArchiveDoors, listCuratorPosts, listCuratorRevisions, listCuratorSpecimens, listCuratorSubmissions, listDreamSubmissions, listFieldNotes, listGeneratedDreams, listManifestoSections, listMediaAssets, listOfferingLedger, listPublishedCuratorPosts, listSpecimenUnlocks, listSubscribers, listUsers, registerMediaAsset, restoreOfferings, setCuratorEmail, spendOfferings, updateCuratorPost, updateMediaAsset, upsertArchiveDoor, upsertCuratorSpecimen, upsertFieldNote, upsertManifestoSection, upsertUser } from "./db";
 import { storagePut } from "./storage";
 import { notifyOwner } from "./_core/notification";
 import { sdk } from "./_core/sdk";
@@ -119,10 +119,15 @@ export const appRouter = router({
     bySlug: publicProcedure.input(z.object({ slug: z.string().min(1) })).query(async ({ input }) => { const post = await getCuratorPostBySlug(input.slug); return post?.status === "published" ? post : null; }),
     list: ownerProcedure.query(() => listCuratorPosts()),
     revisions: ownerProcedure.input(z.object({ postId: z.number().int() })).query(({ input }) => listCuratorRevisions(input.postId)),
+    mediaLibrary: ownerProcedure.query(() => listMediaAssets()),
+    updateMediaAsset: ownerProcedure.input(z.object({ id: z.number().int(), fileName: z.string().min(1).max(160), altText: z.string().max(500), caption: z.string().max(500), credit: z.string().max(255) })).mutation(({ input }) => updateMediaAsset(input.id, { fileName: input.fileName, altText: input.altText, caption: input.caption, credit: input.credit })),
+    archiveMediaAsset: ownerProcedure.input(z.object({ id: z.number().int() })).mutation(({ input }) => archiveMediaAsset(input.id)),
     uploadMedia: ownerProcedure.input(z.object({ fileName: z.string().min(1).max(160), contentType: z.enum(["image/jpeg", "image/png", "image/webp", "image/gif", "video/mp4", "video/webm", "audio/mpeg", "audio/wav", "audio/ogg", "audio/webm"]), data: z.string().min(1) })).mutation(async ({ input, ctx }) => {
       const bytes = Buffer.from(input.data, "base64");
       if (bytes.byteLength > 25 * 1024 * 1024) throw new Error("Media uploads must be 25MB or smaller.");
-      return storagePut(`curator/${ctx.user.id}/${Date.now()}-${input.fileName.replace(/[^a-zA-Z0-9._-]/g, "-")}`, bytes, input.contentType);
+      const asset = await storagePut(`curator/${ctx.user.id}/${Date.now()}-${input.fileName.replace(/[^a-zA-Z0-9._-]/g, "-")}`, bytes, input.contentType);
+      await registerMediaAsset({ key: asset.key, url: asset.url, fileName: input.fileName, contentType: input.contentType, sizeBytes: bytes.byteLength, uploadedBy: ctx.user.id });
+      return asset;
     }),
     create: ownerProcedure.input(z.object({
       title: z.string().min(1).max(255),

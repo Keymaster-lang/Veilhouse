@@ -15,9 +15,11 @@ import {
   InsertArchiveDoor,
   InsertFieldNote,
   InsertManifestoSection,
+  InsertMediaAsset,
   archiveDoors,
   fieldNotes,
   manifestoSections,
+  mediaAssets,
   curatorPostRevisions,
   curatorPosts,
   curatorSettings,
@@ -378,4 +380,74 @@ export async function upsertManifestoSection(section: InsertManifestoSection) {
   }
   const rows = await db.insert(manifestoSections).values(section).returning();
   return rows[0];
+}
+
+
+type MediaUsage = { source: string; title: string; key: string };
+
+async function listMediaUsage(db: DrizzleD1Database) {
+  const [posts, specimens, doors, notes, manifesto, submissions] = await Promise.all([
+    db.select({ title: curatorPosts.title, imageKey: curatorPosts.imageKey, videoKey: curatorPosts.videoKey }).from(curatorPosts),
+    db.select({ title: curatorSpecimens.title, imageKey: curatorSpecimens.imageKey, videoKey: curatorSpecimens.videoKey, audioKey: curatorSpecimens.audioKey }).from(curatorSpecimens),
+    db.select({ title: archiveDoors.name, key: archiveDoors.imageKey }).from(archiveDoors),
+    db.select({ title: fieldNotes.title, key: fieldNotes.imageKey }).from(fieldNotes),
+    db.select({ title: manifestoSections.heading, key: manifestoSections.imageKey }).from(manifestoSections),
+    db.select({ title: curatorSubmissions.title, key: curatorSubmissions.imageKey }).from(curatorSubmissions),
+  ]);
+  const usage: MediaUsage[] = [];
+  const add = (source: string, rows: Record<string, string | null>[]) => rows.forEach((row) => Object.entries(row).filter(([field]) => field.endsWith("Key")).forEach(([, key]) => key && usage.push({ source, title: String(row.title), key })));
+  add("Dispatches", posts);
+  add("Specimens", specimens);
+  add("Archive doors", doors as unknown as Record<string, string | null>[]);
+  add("Field Notes", notes as unknown as Record<string, string | null>[]);
+  add("Manifesto", manifesto as unknown as Record<string, string | null>[]);
+  add("Submissions", submissions as unknown as Record<string, string | null>[]);
+  return usage;
+}
+
+export async function registerMediaAsset(asset: InsertMediaAsset) {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  await db.insert(mediaAssets).values(asset).onConflictDoUpdate({
+    target: mediaAssets.key,
+    set: { url: asset.url, fileName: asset.fileName, contentType: asset.contentType, sizeBytes: asset.sizeBytes ?? 0, updatedAt: new Date() },
+  });
+  const rows = await db.select().from(mediaAssets).where(eq(mediaAssets.key, asset.key)).limit(1);
+  return rows[0];
+}
+
+export async function listMediaAssets() {
+  const db = await getDb();
+  if (!db) return [];
+  const usage = await listMediaUsage(db);
+  const assetsBeforeSync = await db.select().from(mediaAssets);
+  const known = new Set(assetsBeforeSync.map((asset) => asset.key));
+  const missing = Array.from(new Set(usage.map((item) => item.key))).filter((key) => !known.has(key));
+  for (const key of missing) {
+    const fileName = key.split("/").pop() || key;
+    const extension = fileName.split(".").pop()?.toLowerCase();
+    const contentType = extension === "mp4" ? "video/mp4" : extension === "webm" ? "video/webm" : extension === "mp3" ? "audio/mpeg" : extension === "wav" ? "audio/wav" : extension === "ogg" ? "audio/ogg" : "image/jpeg";
+    await db.insert(mediaAssets).values({ key, url: `/media/${key}`, fileName, contentType, uploadedBy: null }).onConflictDoNothing();
+  }
+  const assets = await db.select().from(mediaAssets).orderBy(desc(mediaAssets.createdAt));
+  return assets.map((asset) => ({ ...asset, usage: usage.filter((item) => item.key === asset.key) }));
+}
+
+export async function updateMediaAsset(id: number, patch: Pick<InsertMediaAsset, "altText" | "caption" | "credit" | "fileName">) {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  await db.update(mediaAssets).set({ ...patch, updatedAt: new Date() }).where(eq(mediaAssets.id, id));
+  const rows = await db.select().from(mediaAssets).where(eq(mediaAssets.id, id)).limit(1);
+  return rows[0];
+}
+
+export async function archiveMediaAsset(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  const asset = (await db.select().from(mediaAssets).where(eq(mediaAssets.id, id)).limit(1))[0];
+  if (!asset) throw new Error("Media asset not found");
+  const usage = (await listMediaUsage(db)).filter((item) => item.key === asset.key);
+  if (usage.length) throw new Error(`This asset is still used by ${usage.map((item) => `${item.source}: ${item.title}`).join(", ")}. Update those records before archiving it.`);
+  await db.update(mediaAssets).set({ archived: true, updatedAt: new Date() }).where(eq(mediaAssets.id, id));
+  return { success: true as const };
 }

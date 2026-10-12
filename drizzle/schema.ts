@@ -202,3 +202,22 @@ export const manifestoSections = sqliteTable("manifesto_sections", {
 
 export type ManifestoSection = typeof manifestoSections.$inferSelect;
 export type InsertManifestoSection = typeof manifestoSections.$inferInsert;
+
+export const mediaAssets = sqliteTable("media_assets", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  key: text("key").notNull().unique(),
+  url: text("url").notNull(),
+  fileName: text("fileName").notNull(),
+  contentType: text("contentType").notNull(),
+  sizeBytes: integer("sizeBytes").notNull().default(0),
+  altText: text("altText").notNull().default(""),
+  caption: text("caption").notNull().default(""),
+  credit: text("credit").notNull().default(""),
+  archived: integer("archived", { mode: "boolean" }).notNull().default(false),
+  uploadedBy: integer("uploadedBy"),
+  createdAt: integer("createdAt", { mode: "timestamp" }).$defaultFn(() => new Date()).notNull(),
+  updatedAt: integer("updatedAt", { mode: "timestamp" }).$defaultFn(() => new Date()).notNull(),
+});
+
+export type MediaAsset = typeof mediaAssets.$inferSelect;
+export type InsertMediaAsset = typeof mediaAssets.$inferInsert;
