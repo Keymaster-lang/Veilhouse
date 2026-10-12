@@ -1,29 +1,10 @@
-import { useEffect } from "react";
 import { useRoute } from "wouter";
-import CuratorAdmin from "./CuratorAdmin";
+import CuratorWorkspace from "./CuratorWorkspace";
 
-const anchors: Record<string, string> = {
-  "archive-control": "specimen-manager",
-  "specimen-editor": "specimen-manager",
-  "media-chamber": "specimen-manager",
-  "hero-carousel": "specimen-manager",
-  "submission-inbox": "submissions",
-  "dream-records": "dream-records",
-  "resident-registry": "residents",
-  "archive-doors": "specimen-manager",
-  "dispatches-editor": "dispatches",
-  "field-notes-library": "dispatches",
-  "manifesto-editor": "settings",
-  "site-configuration": "settings",
-  "archive-audit": "audit",
-};
+type Section = "archive-control" | "specimen-editor" | "media-chamber" | "hero-carousel" | "submission-inbox" | "dream-records" | "resident-registry" | "archive-doors" | "dispatches-editor" | "field-notes-library" | "manifesto-editor" | "site-configuration" | "archive-audit";
 
 export default function CuratorSection() {
   const [, params] = useRoute("/curator-admin/:section");
-  const anchor = anchors[params?.section || ""] || "specimen-manager";
-  useEffect(() => {
-    const timer = window.setTimeout(() => document.getElementById(anchor)?.scrollIntoView({ behavior: "smooth", block: "start" }), 250);
-    return () => window.clearTimeout(timer);
-  }, [anchor]);
-  return <CuratorAdmin activeSection={(params?.section as Parameters<typeof CuratorAdmin>[0]["activeSection"]) || "curator-desk"} />;
+  const section = (params?.section || "archive-control") as Section;
+  return <CuratorWorkspace section={section} />;
 }
