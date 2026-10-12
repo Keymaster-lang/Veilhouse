@@ -25,5 +25,5 @@ export default function CuratorSection() {
     const timer = window.setTimeout(() => document.getElementById(anchor)?.scrollIntoView({ behavior: "smooth", block: "start" }), 250);
     return () => window.clearTimeout(timer);
   }, [anchor]);
-  return <CuratorAdmin />;
+  return <CuratorAdmin activeSection={(params?.section as Parameters<typeof CuratorAdmin>[0]["activeSection"]) || "curator-desk"} />;
 }
