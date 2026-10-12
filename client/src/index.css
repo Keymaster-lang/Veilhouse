@@ -266,3 +266,18 @@ body, button, a, input, textarea, select { cursor: url('/archive-assets/generate
 .preview-card h3 { margin: 10px 0 6px; font: 400 32px/.9 "Cormorant Garamond",serif; }
 .preview-card p { margin: 0; color: #c6bdb0; line-height: 1.5; font-size: 12px; }
 @media (max-width: 800px) { .two-pane-editor { grid-template-columns: 1fr; } }
+
+
+.archive-narration { margin: 0 0 30px; max-width: 520px; }
+.archive-narration > audio { display: none; }
+.archive-narration-button { position: relative; isolation: isolate; overflow: hidden; width: 100%; min-height: 62px; display: grid; grid-template-columns: 30px 1fr auto; align-items: center; gap: 13px; padding: 13px 15px; border: 1px solid rgba(165,61,47,.62); background: rgba(165,61,47,.045); color: #191714; text-align: left; cursor: pointer; }
+.archive-narration-button::after { content: ""; position: absolute; z-index: -1; inset: 0; opacity: 0; background: repeating-linear-gradient(0deg, transparent 0 3px, rgba(165,61,47,.22) 3px 4px), linear-gradient(90deg, transparent, rgba(255,255,255,.42), transparent); transform: translateX(-100%); transition: opacity 180ms ease, transform 500ms steps(7,end); pointer-events: none; }
+.archive-narration-button:hover::after, .archive-narration-button[aria-pressed="true"]::after { opacity: .65; transform: translateX(100%); }
+.archive-narration-button:hover { border-color: #a53d2f; background: rgba(165,61,47,.1); }
+.archive-narration-icon { width: 28px; height: 28px; display: grid; place-items: center; border: 1px solid #a53d2f; color: #a53d2f; }
+.archive-narration-copy { display: flex; flex-direction: column; gap: 4px; }
+.archive-narration-copy b { color: #a53d2f; font-size: 9px; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; }
+.archive-narration-copy small, .archive-narration-code { color: #615b54; font-size: 8px; letter-spacing: .1em; text-transform: uppercase; }
+.archive-narration-code { align-self: start; padding-top: 3px; color: #8b8176; text-align: right; }
+@media (prefers-reduced-motion: reduce) { .archive-narration-button::after { transition: none; } }
+@media (max-width: 800px) { .archive-narration-button { grid-template-columns: 30px 1fr; }.archive-narration-code { grid-column: 2; padding-top: 0; text-align: left; } }
