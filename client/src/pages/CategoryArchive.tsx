@@ -7,6 +7,7 @@ import { archiveImages } from "./archiveImages";
 import { archiveMetadata, type ArchiveMetadata } from "./archiveMetadata";
 import { trpc } from "@/lib/trpc";
 import { openVeilhouseLightbox } from "@/components/VeilhouseLightbox";
+import { specimenSlug } from "./specimenCatalog";
 
 const religiousHorrorImages = [
   "/archive-assets/generated/veilhouse/religious-horror-rerender/RH-001.jpg", "/archive-assets/generated/veilhouse/religious-horror-rerender/RH-002.jpg", "/archive-assets/generated/veilhouse/religious-horror-rerender/RH-003.jpg", "/archive-assets/generated/veilhouse/religious-horror-rerender/RH-004.jpg",
@@ -46,7 +47,7 @@ export default function CategoryArchive() {
   const records = category[0] === "religious-horror" ? religious : archiveMetadata[category[0]] || [];
   const overridesQuery = trpc.curator.specimens.useQuery();
   const doorsQuery = trpc.editorial.doors.useQuery();
-  const specimens: Specimen[] = records.map((record, specimenIndex) => ({ ...record, image: category[0] === "religious-horror" ? religiousHorrorImages[specimenIndex] : archiveImages[category[0]]?.[specimenIndex] })).map((specimen) => { const override = overridesQuery.data?.find((item) => item.slug === specimen.title.toLowerCase().replaceAll(" ", "-")); return { ...specimen, image: override?.imageUrl || specimen.image, description: override?.excerpt || specimen.description, displayOrder: override?.displayOrder || 0, visible: override?.visible ?? true }; }).filter((specimen) => specimen.visible).sort((left, right) => (left.displayOrder || 0) - (right.displayOrder || 0));
+  const specimens: Specimen[] = records.map((record, specimenIndex) => ({ ...record, image: category[0] === "religious-horror" ? religiousHorrorImages[specimenIndex] : archiveImages[category[0]]?.[specimenIndex] })).map((specimen) => { const override = overridesQuery.data?.find((item) => item.slug === specimenSlug(specimen.title)); return { ...specimen, image: override?.imageUrl || specimen.image, description: override?.excerpt || specimen.description, displayOrder: override?.displayOrder || 0, visible: override?.visible ?? true }; }).filter((specimen) => specimen.visible).sort((left, right) => (left.displayOrder || 0) - (right.displayOrder || 0));
   const [, navigate] = useLocation();
 
   const savedDoor = doorsQuery.data?.find((door) => door.slug === category[0]);
@@ -56,7 +57,7 @@ export default function CategoryArchive() {
       <img src={specimen.image} alt={specimen.title} onClick={(event) => openVeilhouseLightbox(event, specimen.image || "", specimen.title)} />
       <div><span>{specimen.id} / {category[1]}</span><h2>{specimen.title}</h2><p>{specimen.description}</p>
         <details className="specimen-record"><summary>Open archive record</summary><dl><div><dt>MEDIUM</dt><dd>{specimen.medium}</dd></div><div><dt>LOCATION</dt><dd>{specimen.location}</dd></div><div><dt>ACCESSION DATE</dt><dd>{specimen.accessionDate}</dd></div></dl><p><strong>CURATOR'S NOTE</strong><br />{specimen.curatorNote}</p><p><strong>AI IMAGE PROMPT</strong><br />{specimen.prompt}</p></details>
-        <a href={`/specimen/${specimen.title.toLowerCase().replaceAll(" ", "-")}`}>Read label <ArrowUpRight size={14} /></a>
+        <a href={`/specimen/${specimenSlug(specimen.title)}`}>Read label <ArrowUpRight size={14} /></a>
       </div>
     </article>)}</div>
     <div className="category-nav"><button type="button" onClick={() => navigate(`/archive/${categories[(index + categories.length - 1) % categories.length][0]}`)}><ArrowLeft size={15} /> Previous door</button><a href="/archive">All doors</a><button type="button" onClick={() => navigate(`/archive/${categories[(index + 1) % categories.length][0]}`)}>Next door <ArrowRight size={15} /></button></div>

@@ -9,6 +9,7 @@ import { archiveMetadata } from "./archiveMetadata";
 import AccountRitual from "@/components/AccountRitual";
 import { startLogin } from "@/const";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { specimenSlug } from "./specimenCatalog";
 
 const images = {
   hero: "/archive-assets/generated/veilhouse/hero_55e3aafa.jpg",
@@ -35,7 +36,7 @@ const entries: CuratedEntry[] = [
 ];
 
 const religiousEntries: CuratedEntry[] = religiousHorrorRecords.map((record, index) => ({
-  slug: record.title.toLowerCase().replaceAll(" ", "-"),
+  slug: specimenSlug(record.title),
   title: record.title,
   category: "Religious horror",
   number: record.id,
@@ -44,7 +45,7 @@ const religiousEntries: CuratedEntry[] = religiousHorrorRecords.map((record, ind
 }));
 
 const categoryEntries: Record<string, CuratedEntry[]> = Object.fromEntries(Object.entries(archiveMetadata).map(([slug, records]) => [slug, records.map((record, index) => ({
-  slug: record.title.toLowerCase().replaceAll(" ", "-"),
+  slug: specimenSlug(record.title),
   title: record.title,
   category: slug.replaceAll("-", " "),
   number: record.id,
