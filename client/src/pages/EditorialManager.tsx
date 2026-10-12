@@ -10,8 +10,8 @@ const blankDoor: DoorForm = { slug: "", name: "", introduction: "", displayOrder
 const blankNote: NoteForm = { title: "", kind: "Curator's Journal", slug: "", excerpt: "", body: "", imageUrl: "", imageKey: "", status: "draft", displayOrder: 0 };
 const blankManifesto: ManifestoForm = { number: "01", heading: "", body: "", imageUrl: "", imageKey: "", displayOrder: 0 };
 
-export default function EditorialManager() {
-  const [tab, setTab] = useState<Tab>("doors");
+export default function EditorialManager({ initialTab = "doors" }: { initialTab?: Tab }) {
+  const [tab, setTab] = useState<Tab>(initialTab);
   const [door, setDoor] = useState(blankDoor);
   const [note, setNote] = useState(blankNote);
   const [manifesto, setManifesto] = useState(blankManifesto);

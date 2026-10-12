@@ -124,3 +124,114 @@ body, button, a, input, textarea, select { cursor: url('/archive-assets/generate
 .admin-section-context__meta a { display: inline-flex; align-items: center; gap: 5px; color: #a53d2f; text-decoration: none; }
 .admin-section-context__meta a:hover { text-decoration: underline; }
 @media (max-width: 800px) { .admin-section-context { display: block; padding: 16px; }.admin-section-context h2 { font-size: 31px; }.admin-section-context__meta { justify-content: flex-start; margin-top: 15px; } }
+.curator-overview { max-width: 1240px; margin: 0 auto 35px; }
+.curator-overview-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; margin-top: 28px; }
+.curator-overview-card { display: grid; gap: 9px; padding: 18px; border: 1px solid rgba(25,23,20,.18); background: rgba(247,241,232,.72); color: #191714; }
+.curator-overview-card:hover { border-color: #a53d2f; transform: translateY(-2px); }
+.curator-overview-card span, .curator-overview-card small { color: #a53d2f; font-size: 9px; letter-spacing: .13em; text-transform: uppercase; }
+.curator-overview-card strong { font: 400 43px/.8 "Cormorant Garamond", serif; }
+.curator-overview-card small { display: inline-flex; align-items: center; gap: 5px; color: #615b54; }
+.curator-overview-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 25px; }
+.curator-overview-actions .button-outline { margin-top: 0; }
+/* Each route is a focused work page; the shared desk keeps auth/header, while only its relevant editor remains visible. */
+.curator-admin[data-curator-section="curator-desk"] > .admin-form,
+.curator-admin[data-curator-section="curator-desk"] > .admin-grid,
+.curator-admin[data-curator-section="curator-desk"] > .editorial-manager,
+.curator-admin[data-curator-section="curator-desk"] > .dream-records-panel,
+.curator-admin[data-curator-section="curator-desk"] > .specimen-manager,
+.curator-admin[data-curator-section="curator-desk"] > .resident-ledger,
+.curator-admin[data-curator-section="curator-desk"] > .curator-inbox { display: none; }
+.curator-admin[data-curator-section="curator-desk"] > .curator-overview { display: block; }
+.curator-admin[data-curator-section]:not([data-curator-section="curator-desk"]) > .curator-overview { display: none; }
+.curator-admin[data-curator-section="archive-control"] > .admin-form,
+.curator-admin[data-curator-section="archive-control"] > .admin-grid,
+.curator-admin[data-curator-section="archive-control"] > .editorial-manager,
+.curator-admin[data-curator-section="archive-control"] > .dream-records-panel,
+.curator-admin[data-curator-section="archive-control"] > .resident-ledger,
+.curator-admin[data-curator-section="archive-control"] > .curator-inbox { display: none; }
+.curator-admin[data-curator-section="archive-control"] > .specimen-manager,
+.curator-admin[data-curator-section="specimen-editor"] > .specimen-manager,
+.curator-admin[data-curator-section="media-chamber"] > .specimen-manager,
+.curator-admin[data-curator-section="hero-carousel"] > .specimen-manager,
+.curator-admin[data-curator-section="archive-audit"] > .specimen-manager { display: block; }
+.curator-admin[data-curator-section="specimen-editor"] > .admin-form,
+.curator-admin[data-curator-section="specimen-editor"] > .admin-grid,
+.curator-admin[data-curator-section="specimen-editor"] > .editorial-manager,
+.curator-admin[data-curator-section="specimen-editor"] > .dream-records-panel,
+.curator-admin[data-curator-section="specimen-editor"] > .resident-ledger,
+.curator-admin[data-curator-section="specimen-editor"] > .curator-inbox,
+.curator-admin[data-curator-section="media-chamber"] > .admin-form,
+.curator-admin[data-curator-section="media-chamber"] > .admin-grid,
+.curator-admin[data-curator-section="media-chamber"] > .editorial-manager,
+.curator-admin[data-curator-section="media-chamber"] > .dream-records-panel,
+.curator-admin[data-curator-section="media-chamber"] > .resident-ledger,
+.curator-admin[data-curator-section="media-chamber"] > .curator-inbox,
+.curator-admin[data-curator-section="hero-carousel"] > .admin-form,
+.curator-admin[data-curator-section="hero-carousel"] > .admin-grid,
+.curator-admin[data-curator-section="hero-carousel"] > .editorial-manager,
+.curator-admin[data-curator-section="hero-carousel"] > .dream-records-panel,
+.curator-admin[data-curator-section="hero-carousel"] > .resident-ledger,
+.curator-admin[data-curator-section="hero-carousel"] > .curator-inbox,
+.curator-admin[data-curator-section="archive-audit"] > .admin-form,
+.curator-admin[data-curator-section="archive-audit"] > .admin-grid,
+.curator-admin[data-curator-section="archive-audit"] > .editorial-manager,
+.curator-admin[data-curator-section="archive-audit"] > .dream-records-panel,
+.curator-admin[data-curator-section="archive-audit"] > .resident-ledger,
+.curator-admin[data-curator-section="archive-audit"] > .curator-inbox { display: none; }
+.curator-admin[data-curator-section="submission-inbox"] > .admin-form,
+.curator-admin[data-curator-section="submission-inbox"] > .admin-grid,
+.curator-admin[data-curator-section="submission-inbox"] > .editorial-manager,
+.curator-admin[data-curator-section="submission-inbox"] > .dream-records-panel,
+.curator-admin[data-curator-section="submission-inbox"] > .specimen-manager,
+.curator-admin[data-curator-section="submission-inbox"] > .resident-ledger { display: none; }
+.curator-admin[data-curator-section="submission-inbox"] > .curator-inbox,
+.curator-admin[data-curator-section="dream-records"] > .dream-records-panel { display: block; }
+.curator-admin[data-curator-section="dream-records"] > .admin-form,
+.curator-admin[data-curator-section="dream-records"] > .admin-grid,
+.curator-admin[data-curator-section="dream-records"] > .editorial-manager,
+.curator-admin[data-curator-section="dream-records"] > .specimen-manager,
+.curator-admin[data-curator-section="dream-records"] > .resident-ledger,
+.curator-admin[data-curator-section="dream-records"] > .curator-inbox,
+.curator-admin[data-curator-section="resident-registry"] > .admin-form,
+.curator-admin[data-curator-section="resident-registry"] > .admin-grid,
+.curator-admin[data-curator-section="resident-registry"] > .editorial-manager,
+.curator-admin[data-curator-section="resident-registry"] > .dream-records-panel,
+.curator-admin[data-curator-section="resident-registry"] > .specimen-manager,
+.curator-admin[data-curator-section="resident-registry"] > .curator-inbox { display: none; }
+.curator-admin[data-curator-section="resident-registry"] > .resident-ledger { display: block; }
+.curator-admin[data-curator-section="archive-doors"] > .admin-form,
+.curator-admin[data-curator-section="archive-doors"] > .admin-grid,
+.curator-admin[data-curator-section="archive-doors"] > .dream-records-panel,
+.curator-admin[data-curator-section="archive-doors"] > .specimen-manager,
+.curator-admin[data-curator-section="archive-doors"] > .resident-ledger,
+.curator-admin[data-curator-section="archive-doors"] > .curator-inbox,
+.curator-admin[data-curator-section="field-notes-library"] > .admin-form,
+.curator-admin[data-curator-section="field-notes-library"] > .admin-grid,
+.curator-admin[data-curator-section="field-notes-library"] > .dream-records-panel,
+.curator-admin[data-curator-section="field-notes-library"] > .specimen-manager,
+.curator-admin[data-curator-section="field-notes-library"] > .resident-ledger,
+.curator-admin[data-curator-section="field-notes-library"] > .curator-inbox,
+.curator-admin[data-curator-section="manifesto-editor"] > .admin-form,
+.curator-admin[data-curator-section="manifesto-editor"] > .admin-grid,
+.curator-admin[data-curator-section="manifesto-editor"] > .dream-records-panel,
+.curator-admin[data-curator-section="manifesto-editor"] > .specimen-manager,
+.curator-admin[data-curator-section="manifesto-editor"] > .resident-ledger,
+.curator-admin[data-curator-section="manifesto-editor"] > .curator-inbox { display: none; }
+.curator-admin[data-curator-section="archive-doors"] > .editorial-manager,
+.curator-admin[data-curator-section="field-notes-library"] > .editorial-manager,
+.curator-admin[data-curator-section="manifesto-editor"] > .editorial-manager { display: block; }
+.curator-admin[data-curator-section="dispatches-editor"] > .admin-form,
+.curator-admin[data-curator-section="dispatches-editor"] > .editorial-manager,
+.curator-admin[data-curator-section="dispatches-editor"] > .dream-records-panel,
+.curator-admin[data-curator-section="dispatches-editor"] > .specimen-manager,
+.curator-admin[data-curator-section="dispatches-editor"] > .resident-ledger,
+.curator-admin[data-curator-section="dispatches-editor"] > .curator-inbox { display: none; }
+.curator-admin[data-curator-section="dispatches-editor"] > .admin-grid { display: grid; }
+.curator-admin[data-curator-section="site-configuration"] > .admin-grid,
+.curator-admin[data-curator-section="site-configuration"] > .editorial-manager,
+.curator-admin[data-curator-section="site-configuration"] > .dream-records-panel,
+.curator-admin[data-curator-section="site-configuration"] > .specimen-manager,
+.curator-admin[data-curator-section="site-configuration"] > .resident-ledger,
+.curator-admin[data-curator-section="site-configuration"] > .curator-inbox { display: none; }
+.curator-admin[data-curator-section="site-configuration"] > #settings { display: grid; }
+@media (max-width: 800px) { .curator-overview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
