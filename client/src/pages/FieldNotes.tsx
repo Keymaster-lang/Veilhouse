@@ -2,7 +2,7 @@ import { ArrowUpRight } from "lucide-react";
 import { PageShell, images } from "./ContentPageShell";
 import { trpc } from "@/lib/trpc";
 
-const notes = [
+export const notes = [
   ["Curator's Journal", "FIELD NOTE 017: Ward 07", "Nurse J. Morrison reported on 03/14/2024: ‘The corridor measured 47 meters on Monday. Today it measures 63 meters. We have not added space. The walls are breathing. Patients are reporting that their rooms move when they are not looking.’ Curator's annotation: The house confirms. Ward 07 has no outside.", 2],
   ["Resident Testimonies", "Statement from Room 714", "I woke because someone was moving furniture in the hallway. When I opened the door, the hallway was inside my room. I could see the bed from both sides. I have not slept there since, but every morning the pillow is warm.", 4],
   ["Architect's Blueprints", "Plan: The Unfinished Stair", "The stair rises through three floors and returns to its own underside. Annotation in red pencil: do not measure the distance between landings while standing on a landing.", 5],
