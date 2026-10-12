@@ -6,6 +6,7 @@ import { startLogin } from "@/const";
 import { useAuth } from "@/_core/hooks/useAuth";
 import AccountRitual from "@/components/AccountRitual";
 import { openVeilhouseLightbox } from "@/components/VeilhouseLightbox";
+import { specimenCatalog } from "./specimenCatalog";
 
 const images = {
   faith: "/archive-assets/generated/veilhouse/faith_62552905.jpg",
@@ -46,7 +47,11 @@ const records: Record[] = [
 export default function SpecimenDetail() {
   const [location] = useLocation();
   const slug = location.split("/").filter(Boolean).pop() || "";
-  const record = records.find((item) => item.slug === slug);
+  const catalogItem = specimenCatalog.find((item) => item.slug === slug);
+  const record: Record | undefined = records.find((item) => item.slug === slug) || (catalogItem ? (() => {
+    const image = catalogItem.id.startsWith("RH-") ? `/archive-assets/generated/veilhouse/religious-horror-rerender/${catalogItem.id}.jpg` : `/archive-assets/generated/veilhouse-new-specimens/${catalogItem.id}.jpg`;
+    return { slug: catalogItem.slug, number: catalogItem.id.replace(/\D/g, "").padStart(3, "0"), category: catalogItem.category, title: catalogItem.title, image, supporting: image, note: catalogItem.excerpt, field: `Archive catalogue / ${catalogItem.id}`, label: catalogItem.excerpt, detail: catalogItem.story, story: catalogItem.story, motion: `Recovered matter / ${catalogItem.id}` };
+  })() : undefined);
   const curatorPostQuery = trpc.curator.bySlug.useQuery({ slug }, { enabled: !record, retry: false });
   const specimenOverrideQuery = trpc.curator.specimens.useQuery();
   const specimenOverride = specimenOverrideQuery.data?.find((item) => item.slug === slug);
