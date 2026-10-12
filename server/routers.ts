@@ -84,6 +84,10 @@ export const appRouter = router({
       category: z.string().min(1).max(120),
       excerpt: z.string().optional(),
       story: z.string().optional(),
+      fieldNote: z.string().optional(),
+      label: z.string().optional(),
+      detail: z.string().optional(),
+      motion: z.string().optional(),
       imageUrl: mediaRef.optional(),
       videoUrl: mediaRef.optional(),
       imageKey: z.string().optional().or(z.literal("")),
@@ -94,7 +98,7 @@ export const appRouter = router({
       displayOrder: z.number().int().min(0).max(9999),
       visible: z.boolean(),
       featured: z.boolean(),
-    })).mutation(({ input }) => upsertCuratorSpecimen({ ...input, story: input.story || null, imageUrl: input.imageUrl || null, videoUrl: input.videoUrl || null, imageKey: input.imageKey || null, audioUrl: input.audioUrl || null, audioKey: input.audioKey || null, videoKey: input.videoKey || null })),
+    })).mutation(({ input }) => upsertCuratorSpecimen({ ...input, story: input.story || null, fieldNote: input.fieldNote || null, label: input.label || null, detail: input.detail || null, motion: input.motion || null, imageUrl: input.imageUrl || null, videoUrl: input.videoUrl || null, imageKey: input.imageKey || null, audioUrl: input.audioUrl || null, audioKey: input.audioKey || null, videoKey: input.videoKey || null })),
     duplicateAudit: ownerProcedure.query(async () => {
       const specimens = await listCuratorSpecimens(true);
       const byImage = new Map<string, string[]>();

@@ -55,7 +55,7 @@ export default function SpecimenDetail() {
   const curatorPostQuery = trpc.curator.bySlug.useQuery({ slug }, { enabled: !record, retry: false });
   const specimenOverrideQuery = trpc.curator.specimens.useQuery();
   const specimenOverride = specimenOverrideQuery.data?.find((item) => item.slug === slug);
-  const renderRecord = record && specimenOverride ? { ...record, note: specimenOverride.excerpt || record.note, story: specimenOverride.story || record.story, image: specimenOverride.imageUrl || record.image, videoUrl: specimenOverride.videoUrl || "", audioUrl: specimenOverride.audioUrl || "", heroMedia: specimenOverride.heroMedia } : record;
+  const renderRecord = record && specimenOverride ? { ...record, note: specimenOverride.excerpt || record.note, story: specimenOverride.story || record.story, field: specimenOverride.fieldNote || record.field, label: specimenOverride.label || record.label, detail: specimenOverride.detail || record.detail, motion: specimenOverride.motion || record.motion, image: specimenOverride.imageUrl || record.image, videoUrl: specimenOverride.videoUrl || "", audioUrl: specimenOverride.audioUrl || "", heroMedia: specimenOverride.heroMedia } : record;
   const { user } = useAuth();
   const unlocksQuery = trpc.specimens.unlocks.useQuery({ specimenSlug: slug }, { enabled: Boolean(user), retry: false });
   const unlock = trpc.specimens.unlock.useMutation({ onSuccess: () => { void unlocksQuery.refetch(); } });
