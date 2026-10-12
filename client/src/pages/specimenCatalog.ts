@@ -10,7 +10,7 @@ export type SpecimenCatalogItem = {
   story: string;
 };
 
-const slugify = (value: string) => value.toLowerCase().replaceAll(" ", "-");
+const slugify = (value: string) => value.toLowerCase().trim().replace(/['’]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
 export const specimenCatalog: SpecimenCatalogItem[] = [
   ...religiousHorrorRecords.map((record) => ({ slug: slugify(record.title), id: record.id, title: record.title, category: "Religious Horror", excerpt: `${record.description.split(".")[0]}.`, story: record.description })),
