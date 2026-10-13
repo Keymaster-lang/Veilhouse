@@ -117,7 +117,7 @@ function ArchiveNarration({ src, title }: { src: string; title: string }) {
     <div className="archive-narration-controls">
       <button type="button" className="archive-narration-mute" onClick={() => setMuted((value) => !value)} aria-label={muted ? "Unmute narration" : "Mute narration"}>{muted ? <VolumeX size={14} /> : <Volume2 size={14} />}<span>{muted ? "Muted" : "Signal"}</span></button>
       <label className="archive-narration-volume"><span>Volume</span><input type="range" min="0" max="1" step="0.01" value={muted ? 0 : volume} onChange={(event) => { setMuted(false); setVolume(Number(event.target.value)); }} aria-label="Narration volume" /></label>
-      <span className="archive-narration-status">{playing ? "LIVE / SIGNAL LIFT +6 DB" : "STANDBY / SIGNAL LIFT +6 DB"}</span>
+      <span className="archive-narration-status">{playing ? "LIVE / MASTERED VOICE" : "STANDBY / MASTERED VOICE"}</span>
     </div>
   </div>;
 }
