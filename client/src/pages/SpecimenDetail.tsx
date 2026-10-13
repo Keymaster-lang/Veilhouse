@@ -1,6 +1,6 @@
 /* Veilhouse detail page: a full specimen record with story, gallery stills, and a silent CSS motion study. */
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, ArrowUpRight, Pause, Play, Volume2, VolumeX } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, Maximize2, Minimize2, Pause, Play, Volume2, VolumeX } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
 import { startLogin } from "@/const";
@@ -35,11 +35,13 @@ const parseGalleryMedia = (value?: string | null): GalleryMedia[] => { try { con
 
 function ArchiveNarration({ src, title }: { src: string; title: string }) {
   const audioRef = useRef<HTMLAudioElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
-  const gainRef = useRef<GainNode | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
+  const [minimized, setMinimized] = useState(false);
   const [volume, setVolume] = useState(0.86);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -55,6 +57,66 @@ function ArchiveNarration({ src, title }: { src: string; title: string }) {
     audioContextRef.current?.close().catch(() => undefined);
   }, []);
 
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    let frame = 0;
+    const draw = () => {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const width = Math.max(1, Math.floor(rect.width));
+      const height = Math.max(1, Math.floor(rect.height));
+      if (canvas.width !== width * dpr || canvas.height !== height * dpr) {
+        canvas.width = width * dpr;
+        canvas.height = height * dpr;
+      }
+      const context = canvas.getContext("2d");
+      if (!context) return;
+      context.setTransform(dpr, 0, 0, dpr, 0, 0);
+      context.clearRect(0, 0, width, height);
+      const gradient = context.createLinearGradient(0, 0, width, 0);
+      gradient.addColorStop(0, "rgba(126, 39, 31, .96)");
+      gradient.addColorStop(.28, "rgba(165, 61, 47, .82)");
+      gradient.addColorStop(.62, "rgba(112, 92, 82, .62)");
+      gradient.addColorStop(1, "rgba(154, 145, 132, .3)");
+      context.strokeStyle = gradient;
+      context.lineWidth = .72;
+      context.lineJoin = "round";
+      context.beginPath();
+      const analyser = analyserRef.current;
+      const samples = analyser ? new Uint8Array(analyser.fftSize) : null;
+      analyser?.getByteTimeDomainData(samples!);
+      const now = performance.now() / 1000;
+      for (let x = 0; x <= width; x += 1) {
+        const ratio = x / width;
+        let signal: number;
+        if (samples) {
+          signal = (samples[Math.min(samples.length - 1, Math.floor(ratio * samples.length))] - 128) / 128;
+        } else {
+          const envelope = .25 + .75 * (0.5 + 0.5 * Math.sin(ratio * 7.2 + .8));
+          const fine = Math.sin(x * 1.57) * .35 + Math.sin(x * 3.91 + 1.4) * .2 + Math.sin(x * 7.8) * .1;
+          const tremor = Math.sin(x * .23 + now * (playing ? 2.2 : .35)) * .18;
+          const transient = Math.sin(x * .055) > .94 ? Math.sin(x * 12.4) * .45 : 0;
+          signal = (fine + tremor + transient) * envelope;
+        }
+        const y = height / 2 + signal * height * (playing ? .39 : .3);
+        if (x === 0) context.moveTo(x, y); else context.lineTo(x, y);
+      }
+      context.stroke();
+      context.strokeStyle = "rgba(218, 188, 164, .18)";
+      context.lineWidth = .45;
+      context.beginPath();
+      for (let x = 0; x <= width; x += 1) {
+        const y = height / 2 + Math.sin(x * 4.6 + now * (playing ? 1.7 : .18)) * 1.15 + Math.sin(x * .71) * .8;
+        if (x === 0) context.moveTo(x, y); else context.lineTo(x, y);
+      }
+      context.stroke();
+      if (playing) frame = requestAnimationFrame(draw);
+    };
+    draw();
+    return () => cancelAnimationFrame(frame);
+  }, [playing]);
+
   const timecode = (seconds: number) => {
     if (!Number.isFinite(seconds)) return "0:00";
     return `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, "0")}`;
@@ -68,18 +130,19 @@ function ArchiveNarration({ src, title }: { src: string; title: string }) {
     const context = new AudioContextClass();
     const source = context.createMediaElementSource(audio);
     const gain = context.createGain();
+    const analyser = context.createAnalyser();
     const compressor = context.createDynamicsCompressor();
-    // Lift quiet narration while taming peaks so the recovered voice stays intelligible on phones and laptops.
-    gain.gain.value = 1.75;
-    compressor.threshold.value = -18;
-    compressor.knee.value = 18;
-    compressor.ratio.value = 8;
+    gain.gain.value = 1;
+    analyser.fftSize = 512;
+    compressor.threshold.value = -12;
+    compressor.knee.value = 12;
+    compressor.ratio.value = 3;
     compressor.attack.value = 0.004;
     compressor.release.value = 0.22;
-    source.connect(gain).connect(compressor).connect(context.destination);
+    source.connect(gain).connect(analyser).connect(compressor).connect(context.destination);
     audioContextRef.current = context;
     sourceRef.current = source;
-    gainRef.current = gain;
+    analyserRef.current = analyser;
   };
 
   const toggle = async () => {
@@ -100,10 +163,7 @@ function ArchiveNarration({ src, title }: { src: string; title: string }) {
     }
   };
 
-  const waveform = [38, 68, 47, 84, 57, 94, 42, 76, 52, 88, 64, 43, 79, 55, 97, 48, 72, 51, 86, 61, 45, 74, 58, 91, 46, 69, 53, 82, 41, 66, 49, 73];
-  const playedRatio = duration ? progress / duration : 0;
-
-  return <div className={`archive-narration${playing ? " is-playing" : ""}`}>
+  return <div className={`archive-narration${playing ? " is-playing" : ""}${minimized ? " is-minimized" : ""}`}>
     <audio ref={audioRef} src={src} preload="metadata" onLoadedMetadata={(event) => setDuration(event.currentTarget.duration)} onTimeUpdate={(event) => setProgress(event.currentTarget.currentTime)} onEnded={() => { setPlaying(false); setProgress(0); }} aria-label={`${title} audio narration`} />
     <div className="archive-narration-head">
       <button type="button" className="archive-narration-button" onClick={toggle} aria-pressed={playing} aria-label={playing ? `Pause ${title} narration` : `Play ${title} narration`}>
@@ -111,13 +171,12 @@ function ArchiveNarration({ src, title }: { src: string; title: string }) {
         <span className="archive-narration-copy"><b>{playing ? "Pause narration" : "Play narration"}</b><small>{playing ? "Recovered signal / transmitting" : "Recovered voice / listen to the record"}</small></span>
       </button>
       <span className="archive-narration-code">AUDIO / {title.split(" ").slice(0, 2).join(" ").toUpperCase()}</span>
+      <button type="button" className="archive-narration-minimize" onClick={() => setMinimized((value) => !value)} aria-label={minimized ? "Expand narration player" : "Minimize narration player"}>{minimized ? <Maximize2 size={13} /> : <Minimize2 size={13} />}</button>
     </div>
-    <div className="archive-narration-signal" aria-hidden="true">{waveform.map((height, index) => <i key={index} className={index / waveform.length <= playedRatio ? "is-passed" : ""} style={{ height: `${height}%`, animationDelay: `${index * -37}ms` }} />)}</div>
-    <div className="archive-narration-progress-row"><input className="archive-narration-progress" type="range" min="0" max={duration || 0} step="0.1" value={Math.min(progress, duration || 0)} onChange={(event) => { const next = Number(event.target.value); if (audioRef.current) audioRef.current.currentTime = next; setProgress(next); }} aria-label="Narration position" /><span>{timecode(progress)} / {timecode(duration)}</span></div>
-    <div className="archive-narration-controls">
-      <button type="button" className="archive-narration-mute" onClick={() => setMuted((value) => !value)} aria-label={muted ? "Unmute narration" : "Mute narration"}>{muted ? <VolumeX size={14} /> : <Volume2 size={14} />}<span>{muted ? "Muted" : "Signal"}</span></button>
-      <label className="archive-narration-volume"><span>Volume</span><input type="range" min="0" max="1" step="0.01" value={muted ? 0 : volume} onChange={(event) => { setMuted(false); setVolume(Number(event.target.value)); }} aria-label="Narration volume" /></label>
-      <span className="archive-narration-status">{playing ? "LIVE / MASTERED VOICE" : "STANDBY / MASTERED VOICE"}</span>
+    <div className="archive-narration-details">
+      <canvas ref={canvasRef} className="archive-narration-signal" aria-label="Analog static narration waveform" role="img" />
+      <div className="archive-narration-progress-row"><input className="archive-narration-progress" type="range" min="0" max={duration || 0} step="0.1" value={Math.min(progress, duration || 0)} onChange={(event) => { const next = Number(event.target.value); if (audioRef.current) audioRef.current.currentTime = next; setProgress(next); }} aria-label="Narration position" /><span>{timecode(progress)} / {timecode(duration)}</span></div>
+      <div className="archive-narration-controls"><button type="button" className="archive-narration-mute" onClick={() => setMuted((value) => !value)} aria-label={muted ? "Unmute narration" : "Mute narration"}>{muted ? <VolumeX size={14} /> : <Volume2 size={14} />}<span>{muted ? "Muted" : "Signal"}</span></button><label className="archive-narration-volume"><span>Volume</span><input type="range" min="0" max="1" step="0.01" value={muted ? 0 : volume} onChange={(event) => { setMuted(false); setVolume(Number(event.target.value)); }} aria-label="Narration volume" /></label><span className="archive-narration-status">{playing ? "LIVE / MASTERED VOICE" : "STANDBY / MASTERED VOICE"}</span></div>
     </div>
   </div>;
 }
