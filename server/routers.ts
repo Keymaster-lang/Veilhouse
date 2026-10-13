@@ -94,11 +94,12 @@ export const appRouter = router({
       videoKey: z.string().optional().or(z.literal("")),
       audioUrl: mediaRef.optional(),
       audioKey: z.string().optional().or(z.literal("")),
+      galleryMedia: z.array(z.object({ id: z.string().min(1).max(80), type: z.enum(["image", "video"]), url: mediaRef, key: z.string().optional().or(z.literal("")), caption: z.string().max(240).optional() })).max(24).optional(),
       heroMedia: z.enum(["image", "video"]),
       displayOrder: z.number().int().min(0).max(9999),
       visible: z.boolean(),
       featured: z.boolean(),
-    })).mutation(({ input }) => upsertCuratorSpecimen({ ...input, story: input.story || null, fieldNote: input.fieldNote || null, label: input.label || null, detail: input.detail || null, motion: input.motion || null, imageUrl: input.imageUrl || null, videoUrl: input.videoUrl || null, imageKey: input.imageKey || null, audioUrl: input.audioUrl || null, audioKey: input.audioKey || null, videoKey: input.videoKey || null })),
+    })).mutation(({ input }) => upsertCuratorSpecimen({ ...input, story: input.story || null, fieldNote: input.fieldNote || null, label: input.label || null, detail: input.detail || null, motion: input.motion || null, imageUrl: input.imageUrl || null, videoUrl: input.videoUrl || null, imageKey: input.imageKey || null, audioUrl: input.audioUrl || null, audioKey: input.audioKey || null, videoKey: input.videoKey || null, galleryMedia: JSON.stringify(input.galleryMedia || []) })),
     duplicateAudit: ownerProcedure.query(async () => {
       const specimens = await listCuratorSpecimens(true);
       const byImage = new Map<string, string[]>();
@@ -126,7 +127,7 @@ export const appRouter = router({
     mediaLibrary: ownerProcedure.query(() => listMediaAssets()),
     updateMediaAsset: ownerProcedure.input(z.object({ id: z.number().int(), fileName: z.string().min(1).max(160), altText: z.string().max(500), caption: z.string().max(500), credit: z.string().max(255) })).mutation(({ input }) => updateMediaAsset(input.id, { fileName: input.fileName, altText: input.altText, caption: input.caption, credit: input.credit })),
     archiveMediaAsset: ownerProcedure.input(z.object({ id: z.number().int() })).mutation(({ input }) => archiveMediaAsset(input.id)),
-    uploadMedia: ownerProcedure.input(z.object({ fileName: z.string().min(1).max(160), contentType: z.enum(["image/jpeg", "image/png", "image/webp", "image/gif", "video/mp4", "video/webm", "audio/mpeg", "audio/wav", "audio/ogg", "audio/webm"]), data: z.string().min(1) })).mutation(async ({ input, ctx }) => {
+    uploadMedia: ownerProcedure.input(z.object({ fileName: z.string().min(1).max(160), contentType: z.enum(["image/jpeg", "image/png", "image/webp", "image/gif", "video/mp4", "video/webm", "audio/mpeg", "audio/wav", "audio/ogg", "audio/webm"]), data: z.string().min(1), target: z.enum(["main", "gallery"]).optional() })).mutation(async ({ input, ctx }) => {
       const bytes = Buffer.from(input.data, "base64");
       if (bytes.byteLength > 25 * 1024 * 1024) throw new Error("Media uploads must be 25MB or smaller.");
       const asset = await storagePut(`curator/${ctx.user.id}/${Date.now()}-${input.fileName.replace(/[^a-zA-Z0-9._-]/g, "-")}`, bytes, input.contentType);

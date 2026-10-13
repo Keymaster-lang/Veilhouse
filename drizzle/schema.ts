@@ -80,6 +80,7 @@ export const curatorSpecimens = sqliteTable("curator_specimens", {
   videoKey: text("videoKey"),
   audioUrl: text("audioUrl"),
   audioKey: text("audioKey"),
+  galleryMedia: text("galleryMedia").default("[]").notNull(),
   heroMedia: text("heroMedia", { enum: ["image", "video"] }).default("image").notNull(),
   displayOrder: integer("displayOrder").default(0).notNull(),
   visible: integer("visible", { mode: "boolean" }).default(true).notNull(),

@@ -285,6 +285,7 @@ export async function upsertCuratorSpecimen(specimen: InsertCuratorSpecimen) {
       videoKey: specimen.videoKey ?? null,
       audioUrl: specimen.audioUrl ?? null,
       audioKey: specimen.audioKey ?? null,
+      galleryMedia: specimen.galleryMedia ?? "[]",
       heroMedia: specimen.heroMedia,
       displayOrder: specimen.displayOrder ?? 0,
       visible: specimen.visible ?? true,
