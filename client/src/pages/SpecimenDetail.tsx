@@ -1,6 +1,6 @@
 /* Veilhouse detail page: a full specimen record with story, gallery stills, and a silent CSS motion study. */
-import { useRef, useState } from "react";
-import { ArrowLeft, ArrowUpRight, Pause, Volume2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowLeft, ArrowUpRight, Pause, Play, Volume2, VolumeX } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
 import { startLogin } from "@/const";
@@ -35,19 +35,91 @@ const parseGalleryMedia = (value?: string | null): GalleryMedia[] => { try { con
 
 function ArchiveNarration({ src, title }: { src: string; title: string }) {
   const audioRef = useRef<HTMLAudioElement>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
+  const gainRef = useRef<GainNode | null>(null);
   const [playing, setPlaying] = useState(false);
+  const [muted, setMuted] = useState(false);
+  const [volume, setVolume] = useState(0.86);
+  const [progress, setProgress] = useState(0);
+  const [duration, setDuration] = useState(0);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.volume = volume;
+    audio.muted = muted;
+  }, [volume, muted]);
+
+  useEffect(() => () => {
+    audioContextRef.current?.close().catch(() => undefined);
+  }, []);
+
+  const timecode = (seconds: number) => {
+    if (!Number.isFinite(seconds)) return "0:00";
+    return `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, "0")}`;
+  };
+
+  const prepareSignal = () => {
+    const audio = audioRef.current;
+    if (!audio || sourceRef.current) return;
+    const AudioContextClass = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioContextClass) return;
+    const context = new AudioContextClass();
+    const source = context.createMediaElementSource(audio);
+    const gain = context.createGain();
+    const compressor = context.createDynamicsCompressor();
+    // Lift quiet narration while taming peaks so the recovered voice stays intelligible on phones and laptops.
+    gain.gain.value = 1.75;
+    compressor.threshold.value = -18;
+    compressor.knee.value = 18;
+    compressor.ratio.value = 8;
+    compressor.attack.value = 0.004;
+    compressor.release.value = 0.22;
+    source.connect(gain).connect(compressor).connect(context.destination);
+    audioContextRef.current = context;
+    sourceRef.current = source;
+    gainRef.current = gain;
+  };
+
   const toggle = async () => {
     const audio = audioRef.current;
     if (!audio) return;
-    if (audio.paused) {
-      await audio.play();
-      setPlaying(true);
-    } else {
-      audio.pause();
+    try {
+      prepareSignal();
+      if (audioContextRef.current?.state === "suspended") await audioContextRef.current.resume();
+      if (audio.paused) {
+        await audio.play();
+        setPlaying(true);
+      } else {
+        audio.pause();
+        setPlaying(false);
+      }
+    } catch {
       setPlaying(false);
     }
   };
-  return <div className="archive-narration"><audio ref={audioRef} src={src} preload="metadata" onEnded={() => setPlaying(false)} aria-label={`${title} audio narration`} /><button type="button" className="archive-narration-button" onClick={toggle} aria-pressed={playing}><span className="archive-narration-icon">{playing ? <Pause size={13} /> : <Volume2 size={14} />}</span><span className="archive-narration-copy"><b>{playing ? "Pause narration" : "Play narration"}</b><small>Recovered voice / {playing ? "now transmitting" : "listen to the record"}</small></span><span className="archive-narration-code">AUDIO / {title.split(" ").slice(0, 2).join(" ").toUpperCase()}</span></button></div>;
+
+  const waveform = [38, 68, 47, 84, 57, 94, 42, 76, 52, 88, 64, 43, 79, 55, 97, 48, 72, 51, 86, 61, 45, 74, 58, 91, 46, 69, 53, 82, 41, 66, 49, 73];
+  const playedRatio = duration ? progress / duration : 0;
+
+  return <div className={`archive-narration${playing ? " is-playing" : ""}`}>
+    <audio ref={audioRef} src={src} preload="metadata" onLoadedMetadata={(event) => setDuration(event.currentTarget.duration)} onTimeUpdate={(event) => setProgress(event.currentTarget.currentTime)} onEnded={() => { setPlaying(false); setProgress(0); }} aria-label={`${title} audio narration`} />
+    <div className="archive-narration-head">
+      <button type="button" className="archive-narration-button" onClick={toggle} aria-pressed={playing} aria-label={playing ? `Pause ${title} narration` : `Play ${title} narration`}>
+        <span className="archive-narration-icon">{playing ? <Pause size={16} /> : <Play size={16} />}</span>
+        <span className="archive-narration-copy"><b>{playing ? "Pause narration" : "Play narration"}</b><small>{playing ? "Recovered signal / transmitting" : "Recovered voice / listen to the record"}</small></span>
+      </button>
+      <span className="archive-narration-code">AUDIO / {title.split(" ").slice(0, 2).join(" ").toUpperCase()}</span>
+    </div>
+    <div className="archive-narration-signal" aria-hidden="true">{waveform.map((height, index) => <i key={index} className={index / waveform.length <= playedRatio ? "is-passed" : ""} style={{ height: `${height}%`, animationDelay: `${index * -37}ms` }} />)}</div>
+    <div className="archive-narration-progress-row"><input className="archive-narration-progress" type="range" min="0" max={duration || 0} step="0.1" value={Math.min(progress, duration || 0)} onChange={(event) => { const next = Number(event.target.value); if (audioRef.current) audioRef.current.currentTime = next; setProgress(next); }} aria-label="Narration position" /><span>{timecode(progress)} / {timecode(duration)}</span></div>
+    <div className="archive-narration-controls">
+      <button type="button" className="archive-narration-mute" onClick={() => setMuted((value) => !value)} aria-label={muted ? "Unmute narration" : "Mute narration"}>{muted ? <VolumeX size={14} /> : <Volume2 size={14} />}<span>{muted ? "Muted" : "Signal"}</span></button>
+      <label className="archive-narration-volume"><span>Volume</span><input type="range" min="0" max="1" step="0.01" value={muted ? 0 : volume} onChange={(event) => { setMuted(false); setVolume(Number(event.target.value)); }} aria-label="Narration volume" /></label>
+      <span className="archive-narration-status">{playing ? "LIVE / SIGNAL LIFT +6 DB" : "STANDBY / SIGNAL LIFT +6 DB"}</span>
+    </div>
+  </div>;
 }
 
 const records: Record[] = [

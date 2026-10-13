@@ -268,20 +268,33 @@ body, button, a, input, textarea, select { cursor: url('/archive-assets/generate
 @media (max-width: 800px) { .two-pane-editor { grid-template-columns: 1fr; } }
 
 
-.archive-narration { margin: 0 0 30px; max-width: 520px; }
+.archive-narration { margin: 0 0 30px; max-width: 620px; padding: 18px 19px 15px; position: relative; overflow: hidden; border: 1px solid rgba(165,61,47,.72); background: linear-gradient(135deg, rgba(58,24,20,.16), rgba(25,18,16,.03)); color: #191714; box-shadow: inset 0 0 0 1px rgba(25,23,20,.08), 0 10px 28px rgba(55,20,15,.08); }
+.archive-narration::before { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .12; background: repeating-linear-gradient(0deg, transparent 0 4px, rgba(165,61,47,.28) 5px, transparent 6px); mix-blend-mode: multiply; }
+.archive-narration::after { content: "RECOVERED / DO NOT PLAY AFTER 03:14"; position: absolute; right: 18px; bottom: 5px; color: rgba(165,61,47,.42); font: 8px/1 "IBM Plex Sans",sans-serif; letter-spacing: .15em; }
 .archive-narration > audio { display: none; }
-.archive-narration-button { position: relative; isolation: isolate; overflow: hidden; width: 100%; min-height: 62px; display: grid; grid-template-columns: 30px 1fr auto; align-items: center; gap: 13px; padding: 13px 15px; border: 1px solid rgba(165,61,47,.62); background: rgba(165,61,47,.045); color: #191714; text-align: left; cursor: pointer; }
-.archive-narration-button::after { content: ""; position: absolute; z-index: -1; inset: 0; opacity: 0; background: repeating-linear-gradient(0deg, transparent 0 3px, rgba(165,61,47,.22) 3px 4px), linear-gradient(90deg, transparent, rgba(255,255,255,.42), transparent); transform: translateX(-100%); transition: opacity 180ms ease, transform 500ms steps(7,end); pointer-events: none; }
-.archive-narration-button:hover::after, .archive-narration-button[aria-pressed="true"]::after { opacity: .65; transform: translateX(100%); }
-.archive-narration-button:hover { border-color: #a53d2f; background: rgba(165,61,47,.1); }
-.archive-narration-icon { width: 28px; height: 28px; display: grid; place-items: center; border: 1px solid #a53d2f; color: #a53d2f; }
-.archive-narration-copy { display: flex; flex-direction: column; gap: 4px; }
-.archive-narration-copy b { color: #a53d2f; font-size: 9px; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; }
+.archive-narration-head, .archive-narration-progress-row, .archive-narration-controls { position: relative; z-index: 1; }
+.archive-narration-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.archive-narration-button { display: inline-flex; align-items: center; gap: 13px; min-width: 0; padding: 0; border: 0; background: transparent; color: #191714; text-align: left; }
+.archive-narration-button:hover .archive-narration-icon, .archive-narration.is-playing .archive-narration-icon { background: #a53d2f; color: #fff7ef; box-shadow: 0 0 0 5px rgba(165,61,47,.1), 0 0 22px rgba(165,61,47,.3); }
+.archive-narration-icon { width: 43px; height: 43px; flex: 0 0 43px; display: grid; place-items: center; border: 1px solid #a53d2f; color: #a53d2f; transition: background 180ms ease, color 180ms ease, box-shadow 180ms ease; }
+.archive-narration-copy { display: flex; flex-direction: column; gap: 5px; }
+.archive-narration-copy b { color: #a53d2f; font-size: 10px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; }
 .archive-narration-copy small, .archive-narration-code { color: #615b54; font-size: 8px; letter-spacing: .1em; text-transform: uppercase; }
-.archive-narration-code { align-self: start; padding-top: 3px; color: #8b8176; text-align: right; }
-@media (prefers-reduced-motion: reduce) { .archive-narration-button::after { transition: none; } }
-@media (max-width: 800px) { .archive-narration-button { grid-template-columns: 30px 1fr; }.archive-narration-code { grid-column: 2; padding-top: 0; text-align: left; } }
-
+.archive-narration-code { align-self: start; padding-top: 3px; color: #8b8176; text-align: right; white-space: nowrap; }
+.archive-narration-signal { height: 64px; margin: 15px 0 4px 57px; display: flex; align-items: center; gap: 3px; border-top: 1px solid rgba(165,61,47,.18); border-bottom: 1px solid rgba(165,61,47,.18); }
+.archive-narration-signal i { display: block; flex: 1; min-width: 2px; max-width: 7px; background: #a53d2f; opacity: .28; transform-origin: center; transition: opacity 180ms ease, background 180ms ease; }
+.archive-narration-signal i.is-passed { opacity: .95; background: #7b2d24; }
+.archive-narration.is-playing .archive-narration-signal i { animation: vh-signal-pulse 720ms ease-in-out infinite alternate; }
+.archive-narration-progress-row { display: flex; align-items: center; gap: 11px; margin-left: 57px; color: #8b8176; font-size: 9px; letter-spacing: .08em; font-variant-numeric: tabular-nums; }
+.archive-narration-progress { width: 100%; height: 3px; accent-color: #a53d2f; cursor: pointer; }
+.archive-narration-controls { display: flex; align-items: center; gap: 16px; margin: 14px 0 0 57px; }
+.archive-narration-mute { display: inline-flex; align-items: center; gap: 6px; padding: 0; border: 0; background: transparent; color: #a53d2f; font-size: 9px; letter-spacing: .1em; text-transform: uppercase; }
+.archive-narration-volume { display: inline-flex; align-items: center; gap: 8px; color: #615b54; font-size: 9px; letter-spacing: .1em; text-transform: uppercase; }
+.archive-narration-volume input { width: 100px; height: 3px; accent-color: #a53d2f; cursor: pointer; }
+.archive-narration-status { margin-left: auto; color: #8b8176; font-size: 8px; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
+@keyframes vh-signal-pulse { from { transform: scaleY(.72); } to { transform: scaleY(1.12); } }
+@media (prefers-reduced-motion: reduce) { .archive-narration.is-playing .archive-narration-signal i { animation: none; } }
+@media (max-width: 800px) { .archive-narration { padding: 15px; }.archive-narration-code { display: none; }.archive-narration-signal, .archive-narration-progress-row, .archive-narration-controls { margin-left: 0; }.archive-narration-controls { flex-wrap: wrap; gap: 12px; }.archive-narration-status { width: 100%; margin-left: 0; } }
 
 .specimen-gallery-editor { margin: 26px 0; padding: 22px; border: 1px solid rgba(25,23,20,.18); background: rgba(25,23,20,.035); }
 .specimen-gallery-editor .admin-list-head { margin-bottom: 20px; }
